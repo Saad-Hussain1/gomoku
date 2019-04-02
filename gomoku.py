@@ -1,15 +1,114 @@
-'''Game of Gomoku (A.K.A. Five in a Row) for player vs. AI
-see: https://en.wikipedia.org/wiki/Gomoku
+'''
+Game of Gomoku (A.K.A. Five in a Row) for player vs. CPU
+See: https://en.wikipedia.org/wiki/Gomoku
 '''
 
+def play_gomoku(board_size=8):
+    '''
+    Main function to start game on a board of size <board_size>
+    '''
+    board = make_empty_board(board_size)
+    
+    while True:
+        print("-------------------------")
+        
+        # Computer move
+        board = cpu_move(board)
+        print_board(board)
+        #analysis(board)
+        
+        game_res = is_win(board)
+        if game_res in ["White won!", "Black won!", "Draw!"]:
+            print(game_res)
+            return
+        
+        # Player move
+        board = player_move(board)
+        if board == 'quit':
+            print('Game quitted')
+            return
+        print_board(board)
+        #analysis(board)
+        
+        game_res = is_win(board)
+        if game_res in ["White won!", "Black won!", "Draw!"]:
+            print(game_res)
+            return
+
+
+def cpu_move(board):
+    '''
+    Place black piece on board <board> at position to maximize score for CPU.
+    '''
+    if is_empty(board):
+        board_height = len(board)
+        board_width = len(board[0])
+        move_y = board_height // 2
+        move_x = board_width // 2
+    else:
+        move_y, move_x = search_max(board)
+    print("Computer move: (%d, %d)\n" % (move_y, move_x))
+    board[move_y][move_x] = "b"
+    return board
+
+
+def player_move(board):
+    '''
+    Place white piece on board <board> according to user input.
+    '''
+    print("Your move! (Type 'quit' at any time to quit the game)")
+    move_x, move_y = -1, -1
+    while True:
+        inp1 = input('x-coord (0-7): ')
+        inp2 = input('y-coord (0-7): ')
+        if inp1 == 'quit' or inp2 == 'quit':
+            return 'quit'
+        else:
+            try:
+                move_x = int(inp1)
+            except ValueError:
+                print("Please enter a valid number")
+            try:
+                move_y = int(inp2)
+            except ValueError:
+                print("Please enter a valid number")
+        if 0 <= move_x <= 7 and 0 <= move_y <= 7:
+            if board[move_y][move_x] == " ":
+                board[move_y][move_x] = "w"
+                break
+            else:
+                print("This space is occupied. Please try again.")
+        else:
+            print("Your coordinates are out of range. Please try again.")
+    return board
+
+
 def make_empty_board(sz):
+    '''
+    Return 2D array of size (sz x sz) with entries [" "]
+    '''
     board = []
     for i in range(sz):
         board.append([" "]*sz)
     return board
 
 
+def is_empty(board):
+    '''
+    Return True if board <board> is empty else False.
+    '''
+    for i in range(len(board)):
+        for j in range(len(board[0])):
+            if board[i][j] != ' ':
+                return False
+    return True
+
+
 def print_board(board):
+    '''
+    Prints board to console
+    Inputs: board -- n x n array of strings
+    '''
     s = "*"
     for i in range(len(board[0])-1):
         s += str(i%10) + "|"
@@ -25,93 +124,30 @@ def print_board(board):
     print(s)
 
 
-def put_seq_on_board(board, y, x, d_y, d_x, length, col):
-    for i in range(length):
-        board[y][x] = col
-        y += d_y
-        x += d_x
-
-
-def score(board):
-    MAX_SCORE = 100000
-    
-    open_b = {}
-    semi_open_b = {}
-    open_w = {}
-    semi_open_w = {}
-    
-    for i in range(2, 6):
-        open_b[i], semi_open_b[i] = detect_rows(board, "b", i)
-        open_w[i], semi_open_w[i] = detect_rows(board, "w", i)
-    
-    if open_b[5] >= 1 or semi_open_b[5] >= 1:
-        return MAX_SCORE
-    
-    elif open_w[5] >= 1 or semi_open_w[5] >= 1:
-        return -MAX_SCORE
-        
-    return (-10000 * (open_w[4] + semi_open_w[4])+ 
-            500  * open_b[4]                     + 
-            50   * semi_open_b[4]                + 
-            -100  * open_w[3]                    + 
-            -30   * semi_open_w[3]               + 
-            50   * open_b[3]                     + 
-            10   * semi_open_b[3]                +  
-            open_b[2] + semi_open_b[2] - open_w[2] - semi_open_w[2])
-
-
-def analysis(board):
-    for c, full_name in [["b", "Black"], ["w", "White"]]:
-        print("%s stones" % (full_name))
-        for i in range(2, 6):
-            open, semi_open = detect_rows(board, c, i);
-            print("Open rows of length %d: %d" % (i, open))
-            print("Semi-open rows of length %d: %d" % (i, semi_open))
-
-
-def play_gomoku(board_size):
-    board = make_empty_board(board_size)
-    board_height = len(board)
-    board_width = len(board[0])
-    
-    while True:
-        print_board(board)
-        if is_empty(board):
-            move_y = board_height // 2
-            move_x = board_width // 2
-        else:
-            move_y, move_x = search_max(board)
-        
-        print("Computer move: (%d, %d)" % (move_y, move_x))
-        board[move_y][move_x] = "b"
-        print_board(board)
-        analysis(board)
-        
-        game_res = is_win(board)
-        if game_res in ["White won", "Black won", "Draw"]:
-            return game_res
-        
-        print("Your move:")
-        move_y = int(input("y coord: "))
-        move_x = int(input("x coord: "))
-        board[move_y][move_x] = "w"
-        print_board(board)
-        analysis(board)
-        
-        game_res = is_win(board)
-        if game_res in ["White won", "Black won", "Draw"]:
-            return game_res
-
-
-def is_empty(board):
+def is_win(board):
+    '''
+    Return string to indicate black won, white won, draw or continue playing.
+    '''
+    for i in range(3):
+        if detect_rows2(board, 'b', 5)[i] > 0:
+            return "Black won!"
+        elif detect_rows2(board, 'w', 5)[i] > 0:
+            return "White won!"
     for i in range(len(board)):
         for j in range(len(board[0])):
-            if board[i][j] != ' ':
-                return False
-    return True
+            if board[i][j] == ' ':
+                return "Continue playing"
+    return "Draw!"
 
 
 def is_bounded(board, y_end, x_end, length, d_y, d_x):
+    '''
+    Return whether sequence of length <length> in direction (d_x, d_y) with 
+    endpoints (x_end, y_end) is open, semi-open, or closed.
+        Open: empty space on both ends of sequence
+        Semi-open: empty space on one end of sequence
+        Closed: empty space on neither end of sequence
+    '''
     bounded_count = 0
     y_start = y_end - (d_y * (length - 1))
     x_start = x_end - (d_x * (length - 1))
@@ -162,10 +198,22 @@ def is_bounded(board, y_end, x_end, length, d_y, d_x):
 
 
 def detect_row(board, col, y_start, x_start, length, d_y, d_x):
+    '''
+    Detects number of open and semi-open of colour <col> of length <length> in 
+    sequence starting at (x_start, y_start) in direction (d_x, d_y) of length 
+    <length> and returns these counts as a tuple.
+    See docstring of "is_bounded" for definitions of open, semiopen, and closed.
+    '''
     return (detect_row2(board, col, y_start, x_start, length, d_y, d_x)[0], detect_row2(board, col, y_start, x_start, length, d_y, d_x)[1])
 
 
 def detect_row2(board, col, y_start, x_start, length, d_y, d_x):
+    '''
+    Detects number of open, semi-open, and closed sequences of colour <col> of 
+    length <length> in sequence starting at (x_start, y_start) in direction 
+    (d_y, d_x) of length <length> and returns these counts as a tuple.
+    See docstring of "is_bounded" for definitions of open, semiopen, and closed.
+    '''
     cur_y = y_start
     cur_x = x_start
     open_sequences = 0
@@ -270,10 +318,20 @@ def detect_row2(board, col, y_start, x_start, length, d_y, d_x):
 
 
 def detect_rows(board, col, length):
+    '''
+    Detects number of open and semi-open sequences of colour <col> of length 
+    <length> on board <board> and returns these counts as a tuple.
+    See docstring of "is_bounded" for definitions of open, semiopen, and closed.
+    '''
     return (detect_rows2(board, col, length)[0], detect_rows2(board, col, length)[1])
 
 
 def detect_rows2(board, col, length):
+    '''
+    Detects number of open, semi-open, and closed sequences of colour <col> of 
+    length <length> on board <board> and returns these counts as a tuple.
+    See docstring of "is_bounded" for definitions of open, semiopen, and closed.
+    '''
     open_seq = 0
     semiopen_seq = 0
     closed_seq = 0
@@ -312,7 +370,41 @@ def detect_rows2(board, col, length):
     return (open_seq, semiopen_seq, closed_seq)
 
 
+def score(board):
+    '''
+    Calculate the "score" of the board for the AI. Assumes black has just moved.
+    '''
+    MAX_SCORE = 100000
+    
+    open_b = {}
+    semi_open_b = {}
+    open_w = {}
+    semi_open_w = {}
+    
+    for i in range(2, 6):
+        open_b[i], semi_open_b[i] = detect_rows(board, "b", i)
+        open_w[i], semi_open_w[i] = detect_rows(board, "w", i)
+    
+    if open_b[5] >= 1 or semi_open_b[5] >= 1:
+        return MAX_SCORE
+    
+    elif open_w[5] >= 1 or semi_open_w[5] >= 1:
+        return -MAX_SCORE
+        
+    return (-10000 * (open_w[4] + semi_open_w[4])+ 
+            500  * open_b[4]                     + 
+            50   * semi_open_b[4]                + 
+            -100  * open_w[3]                    + 
+            -30   * semi_open_w[3]               + 
+            50   * open_b[3]                     + 
+            10   * semi_open_b[3]                +  
+            open_b[2] + semi_open_b[2] - open_w[2] - semi_open_w[2])
+
+
 def search_max(board):
+    '''
+    Return (y, x) coordinates of board to maximize score for black (CPU).
+    '''
     free_squares = []
     cur_max = -100000
     index_cur_max = 0
@@ -331,25 +423,33 @@ def search_max(board):
     return index_cur_max
 
 
-def is_win(board):
-    for i in range(3):
-        if detect_rows2(board, 'b', 5)[i] > 0:
-            return 'Black won'
-        elif detect_rows2(board, 'w', 5)[i] > 0:
-            return 'White won'
-    for i in range(len(board)):
-        for j in range(len(board[0])):
-            if board[i][j] == ' ':
-                return 'Continue playing'
-    return 'Draw'
+def put_seq_on_board(board, y, x, d_y, d_x, length, col):
+    '''
+    For testing purposes. Put sequence of colour <col> of length <length> 
+    starting at position (x,y) in direction (d_x, d_y) on board.
+    '''
+    for i in range(length):
+        board[y][x] = col
+        y += d_y
+        x += d_x
 
 
-board = make_empty_board(8)
+def analysis(board):
+    '''
+    For testing purposes. Analyze the amount of open/semi-open sequences for 
+    each colour.
+    '''
+    for c, full_name in [["b", "Black"], ["w", "White"]]:
+        print("%s stones" % (full_name))
+        for i in range(2, 6):
+            open, semi_open = detect_rows(board, c, i);
+            print("Open rows of length %d: %d" % (i, open))
+            print("Semi-open rows of length %d: %d" % (i, semi_open))
 
 
 #===============================================================
-if __name__ == '__main__':
-    
+if __name__ == "__main__":
+    '''
     def test(current_output, expected_output):
         if current_output == expected_output:
             print('Passed!')
@@ -566,7 +666,7 @@ if __name__ == '__main__':
     board = make_empty_board(8)
     print_board(board)
     
-    '''
+    
     put_seq_on_board(board, y, x, d_y, d_x, length, col)
     is_bounded(board, y_end, x_end, length, d_y, d_x)
     detect_row(board, col, y_start, x_start, length, d_y, d_x)
@@ -574,5 +674,5 @@ if __name__ == '__main__':
     search_max(board)
     '''
     
-    play_gomoku(8)
+    play_gomoku()
     
