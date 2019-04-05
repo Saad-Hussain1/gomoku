@@ -449,6 +449,11 @@ def analysis(board):
 
 #===============================================================
 if __name__ == "__main__":
+    
+    play_gomoku()
+    
+    
+    # BELOW IS ALL TESTING
     '''
     def test(current_output, expected_output):
         if current_output == expected_output:
@@ -673,6 +678,4 @@ if __name__ == "__main__":
     detect_rows(board, col, length)
     search_max(board)
     '''
-    
-    play_gomoku()
     
